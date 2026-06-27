@@ -1,0 +1,12 @@
+.vscode/**
+.github/**
+src/**
+tools/**
+**/*.ts
+**/*.map
+tsconfig.json
+.gitignore
+.vscodeignore
+*.vsix
+.DS_Store
+**/.DS_Store

@@ -1,0 +1,85 @@
+{
+  "name": "novum-tracker",
+  "displayName": "Novum Startup Tracker",
+  "description": "Send coding heartbeats to Novum Startup for time attribution.",
+  "version": "1.0.0",
+  "publisher": "novumstartup",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "homepage": "https://novumstartup.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NovumStartup/novum-tracker"
+  },
+  "bugs": {
+    "url": "https://github.com/NovumStartup/novum-tracker/issues"
+  },
+  "keywords": [
+    "time tracking",
+    "coding time",
+    "heartbeat",
+    "novum startup",
+    "equity",
+    "cursor"
+  ],
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "novum.showOutput",
+        "title": "Novum Startup: Tracking info"
+      }
+    ],
+    "configuration": {
+      "title": "Novum Startup",
+      "properties": {
+        "novum.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key from Novum Startup Settings (shown once when generated)."
+        },
+        "novum.apiUrl": {
+          "type": "string",
+          "default": "https://novumstartup.com",
+          "description": "Novum Startup server origin (no trailing slash)."
+        },
+        "novum.enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "novum.idleThresholdMinutes": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 120
+        },
+        "novum.excludePatterns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Glob patterns (e.g. **/*.md, node_modules/**); matching files skip heartbeats."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish:vsce": "vsce publish",
+    "publish:ovsx": "ovsx publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.0",
+    "ovsx": "^0.10.0",
+    "typescript": "^5.6.0"
+  }
+}
