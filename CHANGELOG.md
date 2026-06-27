@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- Updated the extension icon to the finalized Novum brand mark.
+
 ## 1.0.0
 
 - Initial public release as **Novum Startup Tracker**

@@ -2,7 +2,7 @@
   "name": "novum-tracker",
   "displayName": "Novum Startup Tracker",
   "description": "Send coding heartbeats to Novum Startup for time attribution.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "novumstartup",
   "engines": {
     "vscode": "^1.85.0"
