@@ -1,0 +1,19 @@
+{
+  "name": "novumstartup",
+  "owner": { "name": "Novum Startup" },
+  "metadata": {
+    "description": "Official Novum Startup plugins for Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "novum-tracker",
+      "source": "./claude-plugin",
+      "description": "Coding-time tracking for Claude Code — debounced heartbeats to novumstartup.com, attributed to projects by git remote",
+      "version": "0.1.0",
+      "author": { "name": "Novum Startup" },
+      "homepage": "https://novumstartup.com",
+      "category": "productivity",
+      "tags": ["time-tracking", "heartbeat"]
+    }
+  ]
+}

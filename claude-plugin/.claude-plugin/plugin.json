@@ -1,0 +1,10 @@
+{
+  "name": "novum-tracker",
+  "version": "0.1.0",
+  "description": "Novum Startup coding-time tracking for Claude Code. Sends debounced heartbeats (~1/min) while you work; time attributes to your Novum project by git remote. No prompts, diffs, or file contents are ever sent.",
+  "author": { "name": "Novum Startup" },
+  "homepage": "https://novumstartup.com",
+  "repository": "https://github.com/NovumStartup/novum-tracker",
+  "license": "MIT",
+  "keywords": ["time-tracking", "heartbeat", "novum-startup"]
+}
