@@ -10,6 +10,14 @@ workspaces to projects, and optionally convert ranges into time entries.
   install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=novumstartup.novum-tracker).
 - **Cursor / VSCodium / Windsurf** — search the Extensions view (these editors use
   the [Open VSX Registry](https://open-vsx.org/extension/novumstartup/novum-tracker)).
+- **Claude Code (CLI + desktop app)** — this repo also ships a Claude Code
+  plugin (see [`claude-plugin/`](claude-plugin/)):
+
+  ```
+  /plugin marketplace add NovumStartup/novum-tracker
+  /plugin install novum-tracker@novumstartup
+  /novum-tracker:connect cf_yourkeyhere
+  ```
 
 ## Setup
 

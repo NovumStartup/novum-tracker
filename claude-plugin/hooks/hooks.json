@@ -1,0 +1,29 @@
+{
+  "description": "Novum Startup coding-time heartbeats (debounced ~1/min; Stop force-flushes). Silent no-op until /novum-tracker:connect writes ~/.config/neonpod/heartbeat.env.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env NEONPOD_TOOL_ID=claude-code \"${CLAUDE_PLUGIN_ROOT}/hooks/heartbeat.sh\"",
+            "timeout": 15,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env NEONPOD_TOOL_ID=claude-code NEONPOD_FORCE_FLUSH=1 \"${CLAUDE_PLUGIN_ROOT}/hooks/heartbeat.sh\"",
+            "timeout": 15,
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}
