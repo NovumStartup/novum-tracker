@@ -101,10 +101,11 @@ fi
 
 DEBOUNCE_SECONDS=60
 MIN_DURATION_SECONDS=60
-# Cap the per-heartbeat duration at 5 min. Longer gaps between hook fires
-# almost always represent the operator stepping away mid-session; attributing
-# those as solid coding time would over-count.
-MAX_DURATION_SECONDS=300
+# Cap the per-heartbeat duration at 10 min (the server's own ingest clamp).
+# AI-assisted sessions legitimately pause while the operator reads output and
+# writes the next prompt — no hook fires during that window, so gaps up to the
+# cap count as working time. Anything longer reads as stepping away.
+MAX_DURATION_SECONDS=600
 
 mkdir -p "$STATE_DIR" 2>/dev/null || true
 
