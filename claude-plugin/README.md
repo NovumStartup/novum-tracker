@@ -13,14 +13,20 @@ Inside Claude Code:
 /plugin install novum-tracker@novumstartup
 ```
 
-Then connect it with the API key minted on **Account → Integrations →
-AI coding tools**:
+Then connect it — no key needed:
 
 ```
-/novum-tracker:connect cf_yourkeyhere
+/novum-tracker:connect
 ```
 
-(Self-hosted instances: `/novum-tracker:connect cf_yourkeyhere https://your-instance`.)
+That device-pairs: it shows a short code, you approve it at
+[novumstartup.com/connect](https://novumstartup.com/connect) in a logged-in
+browser, and the key is delivered straight to this machine. For CI or manual
+setups you can still pass a key minted on **Account → Integrations →
+AI coding tools**: `/novum-tracker:connect cf_yourkeyhere`.
+
+(Self-hosted instances: `/novum-tracker:connect https://your-instance`, or
+`/novum-tracker:connect cf_yourkeyhere https://your-instance` with a key.)
 
 Check liveness anytime with `/novum-tracker:status`.
 

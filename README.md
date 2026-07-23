@@ -16,8 +16,11 @@ workspaces to projects, and optionally convert ranges into time entries.
   ```
   /plugin marketplace add NovumStartup/novum-tracker
   /plugin install novum-tracker@novumstartup
-  /novum-tracker:connect cf_yourkeyhere
+  /novum-tracker:connect
   ```
+
+  (`connect` with no arguments device-pairs via a code you approve in the
+  browser; pass `cf_yourkeyhere` instead for CI/manual setups.)
 
 ## Setup
 
