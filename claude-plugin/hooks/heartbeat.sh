@@ -191,7 +191,8 @@ else
   CURL_ERR="/dev/null"
 fi
 
-HTTP_STATUS=$(printf '%s' "$PAYLOAD" | curl -sS -o /dev/null -w '%{http_code}' \
+RESP_FILE="$STATE_DIR/last-response-$TOOL_ID.json"
+HTTP_STATUS=$(printf '%s' "$PAYLOAD" | curl -sS -o "$RESP_FILE" -w '%{http_code}' \
   -X POST "${API_URL_CLEAN}/api/ide/heartbeat" \
   -H 'Content-Type: application/json' \
   -H "X-API-Key: $API_KEY" \
@@ -199,10 +200,36 @@ HTTP_STATUS=$(printf '%s' "$PAYLOAD" | curl -sS -o /dev/null -w '%{http_code}' \
   --data-binary @- 2>>"$CURL_ERR") || true
 [ -z "$HTTP_STATUS" ] && HTTP_STATUS=000
 
+# Attribution feedback (server ≥ the attributed-response deploy; older servers
+# just return {"ok":true} and both fields stay "unknown"). The marker file is
+# what `/novum-tracker:status` and the installers read to say WHERE time is
+# going — a 200 with attributed=false means the beat landed but counts toward
+# no project.
+ATTRIBUTED=unknown
+REASON=unknown
+RESP_BODY=$(cat "$RESP_FILE" 2>/dev/null || true)
+case "$RESP_BODY" in
+  *'"attributed":true'*) ATTRIBUTED=true ;;
+  *'"attributed":false'*) ATTRIBUTED=false ;;
+esac
+case "$RESP_BODY" in
+  *'"reason":"'*)
+    REASON=$(printf '%s' "$RESP_BODY" | sed -n 's/.*"reason":"\([a-z_][a-z_]*\)".*/\1/p')
+    [ -z "$REASON" ] && REASON=unknown
+    ;;
+esac
+
 case "$HTTP_STATUS" in
   2*)
     printf '{"lastFire":%s}\n' "$NOW" > "$STATE_FILE" 2>/dev/null || true
-    log "ok status=$HTTP_STATUS duration=${DURATION}s force=$FORCE_FLUSH"
+    # "unknown" (pre-feedback server) must serialize as JSON null, not a bare
+    # unquoted word — the marker is parsed as JSON by the status skill.
+    ATTRIBUTED_JSON="$ATTRIBUTED"
+    [ "$ATTRIBUTED_JSON" = "unknown" ] && ATTRIBUTED_JSON=null
+    printf '{"attributed":%s,"reason":"%s","folder":%s,"at":"%s"}\n' \
+      "$ATTRIBUTED_JSON" "$REASON" "$(json_str_or_null "$WORKSPACE_FOLDER")" "$TIMESTAMP" \
+      > "$STATE_DIR/attribution-$TOOL_ID.json" 2>/dev/null || true
+    log "ok status=$HTTP_STATUS duration=${DURATION}s force=$FORCE_FLUSH attributed=$ATTRIBUTED reason=$REASON"
     ;;
   *)
     log "fail status=$HTTP_STATUS duration=${DURATION}s payload=$PAYLOAD"

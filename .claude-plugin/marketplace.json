@@ -9,7 +9,7 @@
       "name": "novum-tracker",
       "source": "./claude-plugin",
       "description": "Coding-time tracking for Claude Code — debounced heartbeats to novumstartup.com, attributed to projects by git remote",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "author": { "name": "Novum Startup" },
       "homepage": "https://novumstartup.com",
       "category": "productivity",
