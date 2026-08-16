@@ -1,0 +1,52 @@
+{
+  "description": "Novum Startup coding-time heartbeats for Codex (debounced ~1/min; UserPromptSubmit anchors between-turn think-time; Stop force-flushes; SessionEnd spools the final interval locally with no network call). Silent no-op until ~/.config/neonpod/heartbeat.env exists (pair on novumstartup.com/connect or run the installer).",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env NEONPOD_TOOL_ID=codex \"${PLUGIN_ROOT}/hooks/heartbeat.sh\"",
+            "timeout": 15,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env NEONPOD_TOOL_ID=codex \"${PLUGIN_ROOT}/hooks/heartbeat.sh\"",
+            "timeout": 15,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env NEONPOD_TOOL_ID=codex NEONPOD_FORCE_FLUSH=1 \"${PLUGIN_ROOT}/hooks/heartbeat.sh\"",
+            "timeout": 15,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env NEONPOD_TOOL_ID=codex NEONPOD_FORCE_FLUSH=1 NEONPOD_LOCAL_ONLY=1 \"${PLUGIN_ROOT}/hooks/heartbeat.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

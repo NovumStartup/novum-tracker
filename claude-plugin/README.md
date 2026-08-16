@@ -85,3 +85,24 @@ guaranteed to fit a network call; the spool drains on the next send.
 `DirectoryAdded` is documented upstream but rejected by the 2.1.218
 validator's schema — add it alongside `CwdChanged` once the fleet's CLI
 accepts the key.
+
+## Dual-manifest layout: this directory is ALSO the Codex plugin
+
+Codex's plugin system reads the same marketplace file
+(`.claude-plugin/marketplace.json` is in its loader's search list) and this
+source directory carries BOTH manifests:
+
+- `.claude-plugin/plugin.json` — Claude Code, which auto-loads
+  `hooks/hooks.json` (`${CLAUDE_PLUGIN_ROOT}`, `NEONPOD_TOOL_ID=claude-code`).
+- `.codex-plugin/plugin.json` — Codex, which takes priority in Codex and
+  points at `hooks/hooks-codex.json` (`${PLUGIN_ROOT}` — Codex's root
+  variable is NOT `CLAUDE_PLUGIN_ROOT` — and `NEONPOD_TOOL_ID=codex`;
+  events: PostToolUse / UserPromptSubmit / Stop / SessionEnd — Codex has
+  no CwdChanged, and the SessionStart self-check is Claude-only because
+  its systemMessage output contract is Claude's).
+
+One plugin name, one bundled script set, per-tool hook wiring. Install on
+the Codex side: `codex plugin marketplace add NovumStartup/novum-tracker`
+then `codex plugin add novum-tracker@novumstartup` (Codex prompts once to
+trust the hooks). All THREE version fields (both plugin.json files + the
+marketplace entry) bump together per release.
