@@ -63,15 +63,25 @@ key on the Account page.
 
 ## Release checklist (maintainers)
 
-The heartbeat script is a verbatim copy of chronoforge
-`scripts/coding-tool-heartbeat.sh` (which the app also serves at
-`/install/heartbeat.sh`). Per release:
+Both hook scripts are verbatim copies of their chronoforge upstreams
+(which the app also serves): `hooks/heartbeat.sh` ←
+`scripts/coding-tool-heartbeat.sh` (`/install/heartbeat.sh`) and
+`hooks/session-check.sh` ← `scripts/coding-tool-session-check.sh`
+(`/install/session-check.sh`). Per release:
 
-1. `diff hooks/heartbeat.sh <chronoforge>/scripts/coding-tool-heartbeat.sh`
-   — the only allowed delta is this copy's UPSTREAM header block.
-2. Copy the script verbatim if upstream changed; re-add the header.
+1. `diff` each bundled script against its chronoforge upstream — the only
+   allowed delta is the copy's UPSTREAM header block.
+2. Copy verbatim if upstream changed; re-add the headers.
 3. Bump `version` in `.claude-plugin/plugin.json` **and** the repo-root
    `.claude-plugin/marketplace.json` (they must agree).
 4. `claude plugin validate .` from this directory, then push `main` as
    `novumstartup-bot`. Users pick the release up via `/plugin update
    novum-tracker` or the periodic marketplace refresh.
+
+Hook wiring note: `SessionStart` (self-check) must stay SYNCHRONOUS — its
+`systemMessage` warning renders at session start; async loses it.
+`SessionEnd` must stay `NEONPOD_LOCAL_ONLY=1` — its hook budget is not
+guaranteed to fit a network call; the spool drains on the next send.
+`DirectoryAdded` is documented upstream but rejected by the 2.1.218
+validator's schema — add it alongside `CwdChanged` once the fleet's CLI
+accepts the key.

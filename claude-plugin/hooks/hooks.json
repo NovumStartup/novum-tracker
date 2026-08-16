@@ -1,6 +1,17 @@
 {
-  "description": "Novum Startup coding-time heartbeats (debounced ~1/min; UserPromptSubmit anchors between-turn think-time; Stop force-flushes). Silent no-op until /novum-tracker:connect writes ~/.config/neonpod/heartbeat.env.",
+  "description": "Novum Startup coding-time heartbeats (debounced ~1/min; UserPromptSubmit anchors between-turn think-time; CwdChanged/DirectoryAdded re-attribute after a directory move; Stop force-flushes; SessionEnd spools the final interval locally). SessionStart runs a self-check that warns IN-SESSION when tracking cannot work — it stays synchronous so the warning renders. Silent no-op until /novum-tracker:connect writes ~/.config/neonpod/heartbeat.env.",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env NEONPOD_TOOL_ID=claude-code \"${CLAUDE_PLUGIN_ROOT}/hooks/session-check.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "hooks": [
@@ -25,6 +36,18 @@
         ]
       }
     ],
+    "CwdChanged": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env NEONPOD_TOOL_ID=claude-code \"${CLAUDE_PLUGIN_ROOT}/hooks/heartbeat.sh\"",
+            "timeout": 15,
+            "async": true
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
@@ -33,6 +56,17 @@
             "command": "env NEONPOD_TOOL_ID=claude-code NEONPOD_FORCE_FLUSH=1 \"${CLAUDE_PLUGIN_ROOT}/hooks/heartbeat.sh\"",
             "timeout": 15,
             "async": true
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env NEONPOD_TOOL_ID=claude-code NEONPOD_FORCE_FLUSH=1 NEONPOD_LOCAL_ONLY=1 \"${CLAUDE_PLUGIN_ROOT}/hooks/heartbeat.sh\"",
+            "timeout": 5
           }
         ]
       }
