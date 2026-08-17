@@ -4,6 +4,7 @@ src/**
 tools/**
 **/*.ts
 **/*.map
+out/*.test.js
 tsconfig.json
 .gitignore
 .vscodeignore

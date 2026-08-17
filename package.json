@@ -2,7 +2,7 @@
   "name": "novum-tracker",
   "displayName": "Novum Startup Tracker",
   "description": "Send coding heartbeats to Novum Startup for time attribution.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "publisher": "novumstartup",
   "engines": {
     "vscode": "^1.85.0"
@@ -71,6 +71,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "test": "npm run compile && node --test out/core.test.js",
     "package": "vsce package",
     "publish:vsce": "vsce publish",
     "publish:ovsx": "ovsx publish"

@@ -44,8 +44,16 @@ Code, plus a flush when a turn ends. Each heartbeat contains only:
 | timestamp | ISO 8601 |
 | gitRemoteUrl | `https://github.com/org/repo.git` |
 | commitHash / commitAuthorEmail | HEAD commit info |
+| repoKey | truncated SHA-256 of the checkout root path (never the path itself) |
+| rootCommit | the repo's first commit hash (stored server-side only as an HMAC; omitted for shallow clones) |
+| eventId / sessionId | random UUIDs for de-duplication and session grouping |
+| clientVersion | script version, e.g. `0.5.0` |
+| machineId | random per-install UUID (never the hostname or anything derived from it) |
 
 **Never sent:** prompts, model output, diffs, file contents, file paths.
+Undeliverable heartbeats queue in a local spool
+(`~/.local/state/neonpod/`, mode 0600) and send when the server is
+reachable again.
 
 Scope which repos ever send anything by setting
 `NEONPOD_TRACK_REMOTES="org/repo other-org/"` in
