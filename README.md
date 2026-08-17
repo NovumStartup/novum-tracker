@@ -46,9 +46,18 @@ The status bar shows **Novum: Xh Ym** and an active/idle indicator.
 Each heartbeat is a small JSON payload to `POST <apiUrl>/api/ide/heartbeat`,
 authenticated with your API key. It includes: editor name, active file path
 (relative to the workspace, unless excluded), language id, git branch, latest
-commit hash + author email, workspace folder name, a duration in seconds, and a
-timestamp. Heartbeats only fire while you're active; files matching
+commit hash + author email, workspace folder name, a duration in seconds, a
+timestamp, and the audit fields added in 1.1.0 — a truncated hash of the
+checkout root (`repoKey`, never the path itself), the repo's root commit
+(omitted for shallow clones), a random per-install `machineId` (never the
+hostname), a per-beat `eventId`, the editor `sessionId`, and the extension
+version. Heartbeats only fire while you're active; files matching
 `novum.excludePatterns` are omitted.
+
+Heartbeats that can't be delivered (offline, server restart, rate limit)
+queue in a local spool inside the extension's global storage and send when
+the server is reachable again. Closing the window flushes the final interval
+to the same queue.
 
 ## Development
 
