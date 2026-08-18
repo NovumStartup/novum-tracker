@@ -11,7 +11,7 @@
       "name": "novum-tracker",
       "source": "./claude-plugin",
       "description": "Coding-time tracking for Claude Code AND Codex \u2014 durable offline-spooled heartbeats to novumstartup.com, attributed to projects by git remote, with an in-session warning when tracking breaks (Claude Code). One plugin, dual manifests: each tool loads its own.",
-      "version": "0.5.1",
+      "version": "0.6.0",
       "author": {
         "name": "Novum Startup"
       },

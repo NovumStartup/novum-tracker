@@ -40,6 +40,16 @@ Cursor extension** (below) and the **Claude Code / Codex plugin** under
 
 ## Claude Code / Codex plugin
 
+## 0.6.0
+
+- New `/novum-tracker:track` command: adds the current repo to the
+  `NEONPOD_TRACK_REMOTES` allowlist without hand-editing the env file
+  (no-op when no allowlist is set — the default tracks every repo).
+- `/novum-tracker:status` now checks the CURRENT repo against the
+  allowlist and warns prominently when the folder's time is not being
+  recorded — the allowlist is fail-closed, so this was previously
+  invisible outside the SessionStart self-check.
+
 ## 0.5.1
 
 - The same plugin now installs natively in **Codex**: the repo doubles as a
