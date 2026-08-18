@@ -28,7 +28,10 @@ AI coding tools**: `/novum-tracker:connect cf_yourkeyhere`.
 (Self-hosted instances: `/novum-tracker:connect https://your-instance`, or
 `/novum-tracker:connect cf_yourkeyhere https://your-instance` with a key.)
 
-Check liveness anytime with `/novum-tracker:status`.
+Check liveness anytime with `/novum-tracker:status` — it also warns when the
+current repo is excluded by your tracking allowlist. If you scope tracking
+with `NEONPOD_TRACK_REMOTES` (see below), add a new repo with
+`/novum-tracker:track` from inside it — no env-file editing.
 
 ## What it sends (privacy)
 

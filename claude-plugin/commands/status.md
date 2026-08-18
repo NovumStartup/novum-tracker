@@ -12,8 +12,14 @@ only (e.g. `grep -c '^NEONPOD_API_KEY=' ~/.config/neonpod/heartbeat.env`).
 1. Config: does `~/.config/neonpod/heartbeat.env` exist? Check its
    permissions are 600 (`ls -l`). Confirm it defines `NEONPOD_API_KEY`
    (presence only) and `NEONPOD_API_URL` (safe to show the URL value).
-   Report whether `NEONPOD_TRACK_REMOTES` is set and to what. If the file
-   is missing, suggest `/novum-tracker:connect` and stop.
+   Report whether `NEONPOD_TRACK_REMOTES` is set and to what — and if it
+   IS set, check THIS repo against it (the allowlist is fail-closed):
+   normalize the current directory's `git config --get remote.origin.url`
+   (lowercase, `:` → `/`) and test whether any space-separated entry is a
+   substring of it. Not covered — or no git remote at all while the list
+   is set — means **no time records from this folder**; report that
+   prominently and suggest `/novum-tracker:track` to add the repo. If the
+   env file is missing, suggest `/novum-tracker:connect` and stop.
 2. **Broken beats idle — check delivery errors FIRST.** For each
    `~/.local/state/neonpod/last-error-*.json` (fields:
    `{status, at, tool, spoolDepth}`): report prominently that deliveries
