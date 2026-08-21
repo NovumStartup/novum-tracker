@@ -6,6 +6,25 @@ Cursor extension** (below) and the **Claude Code / Codex plugin** under
 
 ## Extension
 
+## 1.1.1
+
+- **Shared clock claimed before the send flight, not after.** Two windows
+  with phase-offset interval timers each read a stale clock every cycle and
+  could both claim a full interval on different projects — a persistent 2x
+  over-claim. The claim is now written the moment it is computed
+  (monotonic), closing the stale-read window to sub-millisecond.
+- **Orphan-reclaim age comes from the claim filename, not mtime** — rename
+  preserves mtime, so a spool that sat quiet before recovery looked stale
+  the instant it was claimed and a sibling window could rob the active
+  drainer (harmless to totals thanks to eventId dedupe, but it doubled the
+  spool and recorded phantom drops).
+- **Spool cap enforcement moved into the drain**, which exclusively owns the
+  claimed file — the append-side trim could clobber a concurrent window's
+  freshly spooled beat at the cap. Appends keep only an emergency brake at
+  2x cap.
+- **Save-triggered beats are debounced (30s)** — "Save All" and autosave no
+  longer mint a POST and a full-history git walk per file.
+
 ## 1.1.0
 
 - Heartbeats now carry the full 0.5.0-generation payload the AI-tool clients
@@ -39,6 +58,21 @@ Cursor extension** (below) and the **Claude Code / Codex plugin** under
 - One-click setup via the Novum Startup web app (`vscode://novumstartup.novum-tracker/setup`)
 
 ## Claude Code / Codex plugin
+
+## 0.6.1
+
+- Bundled scripts re-synced from upstream 0.5.1: orphan-reclaim age from
+  the claim filename (rename preserves mtime — the age gate robbed active
+  drainers in the normal recovery case), EXIT-trap cleanup of the per-PID
+  temp files, and a glob-expansion guard on `NEONPOD_TRACK_REMOTES`
+  patterns.
+- `/novum-tracker:track` and `/novum-tracker:status` read the LAST
+  `NEONPOD_TRACK_REMOTES` line (the script sources the file, so the last
+  assignment wins) and flag duplicate lines — the first-line read could
+  assert "already tracked" while the script kept dropping the repo.
+- `/novum-tracker:track` no longer allowlists the Read tool it forbids
+  using, and its already-covered check matches the script's semantics
+  (entry substring of the FULL normalized URL).
 
 ## 0.6.0
 

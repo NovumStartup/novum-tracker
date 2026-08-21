@@ -12,8 +12,11 @@ only (e.g. `grep -c '^NEONPOD_API_KEY=' ~/.config/neonpod/heartbeat.env`).
 1. Config: does `~/.config/neonpod/heartbeat.env` exist? Check its
    permissions are 600 (`ls -l`). Confirm it defines `NEONPOD_API_KEY`
    (presence only) and `NEONPOD_API_URL` (safe to show the URL value).
-   Report whether `NEONPOD_TRACK_REMOTES` is set and to what — and if it
-   IS set, check THIS repo against it (the allowlist is fail-closed):
+   Report whether `NEONPOD_TRACK_REMOTES` is set and to what — read the
+   LAST matching line (`grep ... | tail -n 1`; the script sources the file,
+   so the last assignment wins — flag duplicates if `grep -c` shows more
+   than one). If it IS set, check THIS repo against it (the allowlist is
+   fail-closed):
    normalize the current directory's `git config --get remote.origin.url`
    (lowercase, `:` → `/`) and test whether any space-separated entry is a
    substring of it. Not covered — or no git remote at all while the list

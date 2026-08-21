@@ -1,6 +1,6 @@
 ---
 description: Add the current repo to the tracking allowlist (NEONPOD_TRACK_REMOTES) so its coding time records — a no-op when no allowlist is set
-allowed-tools: ["Bash(git:*)", "Bash(grep:*)", "Bash(sed:*)", "Bash(ls:*)", "Bash(uname:*)", "Read"]
+allowed-tools: ["Bash(git:*)", "Bash(grep:*)", "Bash(sed:*)", "Bash(ls:*)", "Bash(uname:*)", "Bash(tail:*)"]
 ---
 
 # Track this repo
@@ -26,14 +26,23 @@ via `grep` and `sed`.
    no argument → explain that allowlist patterns match git remotes, so a
    folder with no remote can't be allowlisted — with an allowlist set it
    never sends (that is the fail-closed rule) — and stop.
-3. Current list: `grep -m1 '^NEONPOD_TRACK_REMOTES=' <config>`. If the line
-   is absent or its value empty, there is NO allowlist — every repo already
-   tracks; report that and stop (do not create one).
-4. Already covered? The heartbeat script treats each space-separated entry
-   as a SUBSTRING of the normalized remote. If any existing entry is a
-   substring of the normalized remote from step 2 (or equals the pattern),
-   report the repo is already tracked and stop.
-5. Append the pattern inside the value, preserving the existing entries.
+3. Current list: `grep '^NEONPOD_TRACK_REMOTES=' <config> | tail -n 1` —
+   the LAST match, because the heartbeat script `source`s the file and the
+   last assignment wins; reading the first line of a hand-edited file with
+   duplicates would assert "already tracked" while the script keeps
+   dropping the repo. If `grep -c` shows MORE than one line, warn the user
+   about the duplicates (name the line numbers via `grep -n`) and operate
+   on the last one. If the line is absent or its value empty, there is NO
+   allowlist — every repo already tracks; report that and stop (do not
+   create one).
+4. Already covered? The heartbeat script tests each space-separated entry
+   as a SUBSTRING of the FULL normalized remote URL (lowercased, `:` → `/`
+   — e.g. `https///github.com/org/repo.git`), not of the short `org/repo`
+   pattern. Normalize the full URL the same way and test each entry
+   against it; if any entry matches, report the repo is already tracked
+   and stop.
+5. Append the pattern inside the value of the LAST matching line,
+   preserving the existing entries.
    Use `sed -i` in place (`sed -i ''` on macOS/BSD — check `uname`); an
    in-place edit preserves the file's 600 permissions, which matter because
    the file also holds the API key. Handle both the quoted

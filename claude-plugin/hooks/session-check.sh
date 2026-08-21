@@ -101,11 +101,14 @@ if [ -n "$ALLOW" ]; then
   fi
   ALLOW_NORMALIZED=$(printf '%s' "$ALLOW_REMOTE" | tr '[:upper:]' '[:lower:]' | tr ':' '/')
   ALLOW_MATCH=0
+  # set -f: see the same guard in coding-tool-heartbeat.sh.
+  set -f
   for ALLOW_PATTERN in $ALLOW; do
     case "$ALLOW_NORMALIZED" in
       *"$ALLOW_PATTERN"*) ALLOW_MATCH=1; break ;;
     esac
   done
+  set +f
   if [ "$ALLOW_MATCH" = "0" ]; then
     warn "this repo is not in NEONPOD_TRACK_REMOTES; no time will be recorded here"
   fi
