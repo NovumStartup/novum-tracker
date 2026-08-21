@@ -40,6 +40,13 @@
 
 set -u
 trap 'exit 0' INT TERM HUP
+# EXIT (not just signals): a host hook timeout that kills the script mid-curl
+# must not strand the per-PID temp files — one of them holds the API key.
+# STATE_DIR is defined below; the trap only fires at exit, after it exists.
+# ${STATE_DIR:-}: the trap body runs under set -u, and a signal arriving
+# before STATE_DIR is assigned would otherwise make the EXIT trap itself
+# fail — a nonzero exit is Claude Code's BLOCKING code on UserPromptSubmit.
+trap '[ -n "${STATE_DIR:-}" ] && rm -f "$STATE_DIR/.curl-headers-$$" "$STATE_DIR/.live-resp-$$" "$STATE_DIR/.drain-resp-$$" 2>/dev/null || true' EXIT
 
 # Everything this script creates is private: the spool persists FULL payloads
 # (a git remote URL can embed a credential), and state/log files carry repo
@@ -52,7 +59,7 @@ umask 077
 # stores it per heartbeat and GET /api/ide/health advertises a minimum — the
 # remote answer to the stale-copy drift class (a July script ran unnoticed on
 # Codex for ~3 weeks because nothing reported which version was sending).
-SCRIPT_VERSION="0.5.0"
+SCRIPT_VERSION="0.5.1"
 
 DEBUG="${NEONPOD_DEBUG:-0}"
 TOOL_ID="${NEONPOD_TOOL_ID:-other}"
@@ -162,11 +169,15 @@ if [ -n "$ALLOW" ]; then
   # lowercase "org/repo" substring pattern.
   ALLOW_NORMALIZED=$(printf '%s' "$ALLOW_REMOTE" | tr '[:upper:]' '[:lower:]' | tr ':' '/')
   ALLOW_MATCH=0
+  # set -f: the unquoted word split must not pathname-expand — a pattern like
+  # `org/*` would otherwise be replaced by matching local file names.
+  set -f
   for ALLOW_PATTERN in $ALLOW; do
     case "$ALLOW_NORMALIZED" in
       *"$ALLOW_PATTERN"*) ALLOW_MATCH=1; break ;;
     esac
   done
+  set +f
   if [ "$ALLOW_MATCH" = "0" ]; then
     # No remote URL in the log — an https remote can embed a credential.
     log "skip: remote not in allowlist"
@@ -474,7 +485,13 @@ reclaim_orphans() {
   # locally, exactly-once at the ledger.
   for ORPHAN in "$SPOOL_FILE".draining.*; do
     [ -f "$ORPHAN" ] || continue
-    if [ -n "$(find "$ORPHAN" -mmin +10 2>/dev/null)" ]; then
+    # Age from the FILENAME epoch (claim names end .<pid>.<epoch>), never
+    # mtime: rename(2) preserves mtime, so a spool that sat quiet >10 min
+    # before draining looked "stale" the moment it was claimed, and a second
+    # window robbed the ACTIVE drainer this gate exists to protect.
+    ORPHAN_EPOCH=${ORPHAN##*.}
+    case "$ORPHAN_EPOCH" in ''|*[!0-9]*) ORPHAN_EPOCH=0 ;; esac
+    if [ "$ORPHAN_EPOCH" -eq 0 ] || [ $((NOW - ORPHAN_EPOCH)) -gt 600 ]; then
       cat "$ORPHAN" >> "$SPOOL_FILE" 2>/dev/null && rm -f "$ORPHAN" 2>/dev/null
     fi
   done

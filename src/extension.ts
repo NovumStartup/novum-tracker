@@ -18,6 +18,11 @@ import {
 } from "./core";
 
 const HEARTBEAT_MS = 2 * 60 * 1000;
+// Save-triggered beats are extra signal between interval beats; without a
+// floor, "Save All" mints one POST (and one full-history rev-list walk) per
+// dirty file and autosave presses the server's rate cap until genuine
+// interval beats 429 into the spool.
+const SAVE_DEBOUNCE_MS = 30 * 1000;
 const MAX_DURATION_SEC = Math.floor(HEARTBEAT_MS / 1000);
 const ORPHAN_RECLAIM_MS = 10 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 10_000;
@@ -108,8 +113,14 @@ function spoolAppend(epochSec: number, payloadJson: string): void {
   if (!spool) return;
   try {
     fs.appendFileSync(spool, buildSpoolLine(epochSec, payloadJson));
+    // Routine cap enforcement lives in drainSpool, which exclusively owns
+    // the rename-claimed file — the read-rewrite here raced a concurrent
+    // window's append and could silently clobber its freshly spooled beat.
+    // This is only the emergency brake at 2x cap (both windows offline AND
+    // over cap), where losing a line to the residual race beats unbounded
+    // growth; the drop is still counted.
     const lines = fs.readFileSync(spool, "utf-8").split("\n").filter(Boolean);
-    if (lines.length > MAX_SPOOL_LINES) {
+    if (lines.length > MAX_SPOOL_LINES * 2) {
       const { kept, dropped } = trimSpoolLines(lines, MAX_SPOOL_LINES);
       fs.writeFileSync(spool, kept.join("\n") + "\n");
       countDropped(dropped);
@@ -120,8 +131,6 @@ function spoolAppend(epochSec: number, payloadJson: string): void {
 }
 
 // The editor's shared clock across windows — the conservation clamp's source.
-// Read-modify-write between windows is unsynchronized on purpose; the worst
-// case is one interval of over-claim, the same bound the shell client accepts.
 function readGlobalLastFire(): number {
   if (!storageDir) return 0;
   try {
@@ -136,17 +145,29 @@ function readGlobalLastFire(): number {
   }
 }
 
-function advanceClocks(nowMs: number): void {
-  lastHeartbeatAt = nowMs;
+// Written AT CLAIM TIME, before the send flight — not after it. Two windows
+// with phase-offset interval timers otherwise both read a stale clock every
+// cycle (the write landed seconds later, after git subprocesses + the POST),
+// each claiming a full interval on a DIFFERENT project: a persistent 2x
+// over-claim the server's per-project merge cannot absorb. Monotonic max so
+// a slow flight's late write can never rewind a newer claim.
+function writeGlobalClock(nowMs: number): void {
   if (!storageDir) return;
+  const claim = Math.floor(nowMs / 1000);
+  if (claim <= readGlobalLastFire()) return;
   try {
     fs.writeFileSync(
       path.join(storageDir, "global-clock.json"),
-      JSON.stringify({ lastFire: Math.floor(nowMs / 1000) }) + "\n",
+      JSON.stringify({ lastFire: claim }) + "\n",
     );
   } catch {
     // Losing the shared clock only weakens the cross-window clamp.
   }
+}
+
+function advanceClocks(nowMs: number): void {
+  lastHeartbeatAt = nowMs;
+  writeGlobalClock(nowMs);
 }
 
 async function postBeat(
@@ -186,7 +207,19 @@ function reclaimOrphans(spool: string): void {
       if (!name.startsWith(prefix)) continue;
       const full = path.join(dir, name);
       try {
-        if (Date.now() - fs.statSync(full).mtimeMs < ORPHAN_RECLAIM_MS) continue;
+        // Age from the FILENAME epoch (claims end .<pid>.<epochSec>), never
+        // mtime: rename(2) preserves mtime, so a spool that sat quiet before
+        // recovery looked stale the instant it was claimed, and this sweep
+        // robbed the ACTIVE drainer it exists to protect. Unparseable names
+        // reclaim immediately — at-least-once, dedup'd by eventId.
+        const m = name.match(/\.draining\.\d+\.(\d+)$/);
+        const claimEpoch = m ? Number(m[1]) : 0;
+        if (
+          claimEpoch > 0 &&
+          Date.now() / 1000 - claimEpoch < ORPHAN_RECLAIM_MS / 1000
+        ) {
+          continue;
+        }
         fs.appendFileSync(spool, fs.readFileSync(full, "utf-8"));
         fs.unlinkSync(full);
       } catch {
@@ -253,7 +286,15 @@ async function drainSpool(base: string, apiKey: string): Promise<void> {
   }
   try {
     if (remainder.length > 0) {
-      fs.appendFileSync(spool, remainder.join("\n") + "\n");
+      // Cap enforcement happens HERE, on lines this drain exclusively owns
+      // (see spoolAppend). Oldest go first, and the drop is counted.
+      let toAppend = remainder;
+      const over = remainder.length - MAX_SPOOL_LINES;
+      if (over > 0) {
+        dropped += over;
+        toAppend = remainder.slice(over);
+      }
+      fs.appendFileSync(spool, toAppend.join("\n") + "\n");
     }
     fs.unlinkSync(claim);
   } catch {
@@ -504,7 +545,16 @@ export function activate(context: vscode.ExtensionContext) {
     if (isIdle() && reason !== "save") return;
 
     const nowMs = Date.now();
+    // Save beats are bonus signal — rate-limit them so "Save All" and
+    // autosave don't mint a POST (and a full rev-list walk) per file.
+    if (reason === "save" && nowMs - lastHeartbeatAt < SAVE_DEBOUNCE_MS) {
+      return;
+    }
     const durationSec = claimedDuration(nowMs);
+    // Claim the shared clock NOW, before the git subprocesses and the POST —
+    // writing it after the flight left a seconds-wide stale-read window that
+    // phase-offset sibling windows hit every cycle (see writeGlobalClock).
+    writeGlobalClock(nowMs);
     const git = await getGitInfo();
     lastGitInfo = git;
     const rootCommit = await getRootCommit(Boolean(git.repoKey));

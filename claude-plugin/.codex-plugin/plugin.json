@@ -1,6 +1,6 @@
 {
   "name": "novum-tracker",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Novum Startup coding-time tracking for Codex. Sends debounced heartbeats (~1/min) while you work; time attributes to your Novum project by git remote. Undeliverable beats spool locally and retry. No prompts, diffs, or file contents are ever sent.",
   "author": {
     "name": "Novum Startup"
